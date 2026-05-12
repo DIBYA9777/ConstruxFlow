@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConstruxFlow | Construction ERP Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --pur1:#4a1472;--pur2:#7c3aed;--pur3:#a855f7;--pur4:#d8b4fe;--pur5:#f3e8ff;
+  --amb1:#92400e;--amb2:#d97706;--amb3:#f59e0b;--amb4:#fcd34d;--amb5:#fef3c7;
+  --eme1:#064e3b;--eme2:#059669;--eme3:#10b981;--eme4:#6ee7b7;--eme5:#d1fae5;
+  --org2:#c2410c;--org3:#ea580c;--org4:#fb923c;
+  --rose3:#f43f5e;--rose4:#fb7185;
+  --bg-deep:#0f0720;--bg-mid:#1a0d2e;--bg-surface:#221240;
+  --glass-pur:rgba(124,58,237,0.12);--glass-amb:rgba(245,158,11,0.1);
+  --glass-eme:rgba(16,185,129,0.1);
+  --border-pur:rgba(168,85,247,0.35);--border-amb:rgba(245,158,11,0.35);
+  --border-eme:rgba(16,185,129,0.3);
+  --text-main:#f5efff;--text-muted:#c4b5e8;--text-dim:#8b7aad;
+  --radius-lg:24px;--radius-md:16px;--radius-sm:10px;
+  --sidebar-w:270px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg-deep);
+  color:var(--text-main);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 10% 20%,rgba(124,58,237,0.35) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 60% at 90% 80%,rgba(245,158,11,0.2) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%,rgba(16,185,129,0.08) 0%,transparent 60%);
+  pointer-events:none;z-index:0;
+}
+/* FLOATING 3D ORBS */
+.orb{position:fixed;border-radius:50%;filter:blur(60px);pointer-events:none;z-index:0;animation:orbFloat 8s ease-in-out infinite;}
+.orb1{width:400px;height:400px;background:rgba(124,58,237,0.18);top:-100px;left:-100px;animation-delay:0s;}
+.orb2{width:300px;height:300px;background:rgba(245,158,11,0.12);bottom:-80px;right:-80px;animation-delay:-3s;}
+.orb3{width:250px;height:250px;background:rgba(16,185,129,0.1);top:50%;right:10%;animation-delay:-5s;}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(20px,-30px) scale(1.05);}}
+
+/* GLASS MIXIN CLASSES */
+.glass{
+  background:rgba(26,13,46,0.6);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border-pur);
+  border-radius:var(--radius-lg);
+}
+.glass-card{
+  background:rgba(34,18,64,0.55);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(168,85,247,0.25);
+  border-radius:var(--radius-md);
+  transition:transform 0.25s,border-color 0.25s,box-shadow 0.25s;
+  position:relative;overflow:hidden;
+}
+.glass-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(168,85,247,0.06) 0%,transparent 60%);
+  pointer-events:none;
+}
+.glass-card:hover{
+  transform:translateY(-3px) perspective(500px) rotateX(1deg);
+  border-color:var(--pur3);
+  box-shadow:0 16px 40px rgba(124,58,237,0.25);
+}
+.glass-amb{
+  background:rgba(34,18,64,0.55);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(245,158,11,0.3);
+  border-radius:var(--radius-md);
+}
+.glass-eme{
+  background:rgba(34,18,64,0.55);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(16,185,129,0.3);
+  border-radius:var(--radius-md);
+}
+
+/* ===== LAYOUT ===== */
+.app{display:flex;min-height:100vh;position:relative;z-index:1;}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar-w);position:fixed;top:0;left:0;height:100vh;
+  background:rgba(15,7,32,0.75);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-right:1px solid var(--border-pur);
+  display:flex;flex-direction:column;padding:1.5rem 1rem;
+  z-index:100;transition:transform 0.3s ease;overflow-y:auto;
+}
+.logo{
+  display:flex;align-items:center;gap:12px;padding:0 8px;margin-bottom:2rem;
+}
+.logo-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--pur2),var(--amb3));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;
+  box-shadow:0 4px 16px rgba(124,58,237,0.4);
+  animation:spinGlow 4s ease-in-out infinite;
+}
+@keyframes spinGlow{
+  0%,100%{box-shadow:0 4px 16px rgba(124,58,237,0.4);}
+  50%{box-shadow:0 4px 24px rgba(245,158,11,0.5);}
+}
+.logo-text{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;
+  background:linear-gradient(135deg,var(--pur4),var(--amb4));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.nav-section-title{font-size:0.65rem;font-weight:600;letter-spacing:0.12em;
+  color:var(--text-dim);text-transform:uppercase;padding:0 12px;margin:1rem 0 0.4rem;}
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:11px 14px;
+  border-radius:44px;cursor:pointer;transition:all 0.2s;
+  font-size:0.9rem;font-weight:500;color:var(--text-muted);margin:3px 0;
+}
+.nav-item i{width:20px;font-size:1rem;text-align:center;}
+.nav-item:hover{background:rgba(168,85,247,0.15);color:var(--text-main);}
+.nav-item.active{
+  background:linear-gradient(135deg,rgba(124,58,237,0.4),rgba(245,158,11,0.2));
+  border:1px solid rgba(168,85,247,0.5);color:#fff;
+  box-shadow:0 4px 16px rgba(124,58,237,0.2);
+}
+.nav-item.active i{color:var(--amb3);}
+.sidebar-footer{margin-top:auto;padding:12px;border-radius:var(--radius-md);
+  background:rgba(168,85,247,0.08);border:1px solid var(--border-pur);
+  font-size:0.75rem;color:var(--text-dim);text-align:center;}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;padding:1.5rem 2rem;min-height:100vh;}
+
+/* TOPBAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;margin-bottom:2rem;
+  padding:12px 20px;border-radius:44px;
+  background:rgba(26,13,46,0.6);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border-pur);
+}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.hamburger{background:none;border:none;color:var(--text-main);font-size:1.4rem;cursor:pointer;display:none;}
+.page-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text-main);}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.badge{padding:6px 16px;border-radius:44px;font-size:0.8rem;font-weight:600;
+  background:linear-gradient(135deg,rgba(124,58,237,0.4),rgba(245,158,11,0.3));
+  border:1px solid rgba(168,85,247,0.4);color:var(--amb4);}
+.role-select{
+  background:rgba(26,13,46,0.7);border:1px solid var(--border-pur);
+  border-radius:44px;padding:6px 14px;color:var(--text-main);
+  font-size:0.85rem;cursor:pointer;outline:none;
+}
+.theme-btn{
+  background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);
+  border-radius:44px;padding:6px 14px;color:var(--amb3);cursor:pointer;
+  font-size:0.85rem;font-weight:500;transition:0.2s;
+}
+.theme-btn:hover{background:rgba(245,158,11,0.25);}
+
+/* MODULE AREA */
+.module-area{animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+/* HEADINGS */
+h1,h2,h3,h4{font-family:'Syne',sans-serif;}
+.mod-header{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;margin-bottom:1.5rem;
+}
+.mod-title{font-size:1.6rem;font-weight:700;color:var(--text-main);}
+.mod-title span{
+  background:linear-gradient(135deg,var(--pur4),var(--amb3));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{padding:1.2rem 1.4rem;position:relative;overflow:hidden;}
+.stat-card::after{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:100px;height:100px;border-radius:50%;
+  background:rgba(168,85,247,0.12);
+}
+.stat-icon{font-size:1.8rem;margin-bottom:8px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:700;
+  background:linear-gradient(135deg,var(--pur4),var(--amb4));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.stat-label{font-size:0.8rem;color:var(--text-muted);margin-top:2px;}
+.stat-trend{font-size:0.8rem;margin-top:6px;}
+.trend-up{color:var(--eme3);}
+.trend-dn{color:var(--rose3);}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;border-radius:var(--radius-md);}
+.data-table{width:100%;border-collapse:collapse;min-width:500px;}
+.data-table thead tr{
+  background:rgba(124,58,237,0.2);
+}
+.data-table th{
+  padding:12px 16px;text-align:left;font-size:0.78rem;
+  font-weight:600;color:var(--pur4);letter-spacing:0.06em;text-transform:uppercase;
+}
+.data-table td{padding:11px 16px;font-size:0.88rem;color:var(--text-muted);
+  border-bottom:1px solid rgba(168,85,247,0.12);}
+.data-table tbody tr{transition:background 0.15s;}
+.data-table tbody tr:hover{background:rgba(168,85,247,0.08);}
+.data-table tbody tr:last-child td{border-bottom:none;}
+
+/* STATUS PILLS */
+.pill{display:inline-block;padding:3px 12px;border-radius:44px;font-size:0.75rem;font-weight:600;}
+.pill-pur{background:rgba(168,85,247,0.2);color:var(--pur4);border:1px solid rgba(168,85,247,0.35);}
+.pill-eme{background:rgba(16,185,129,0.15);color:var(--eme3);border:1px solid rgba(16,185,129,0.35);}
+.pill-amb{background:rgba(245,158,11,0.15);color:var(--amb3);border:1px solid rgba(245,158,11,0.35);}
+.pill-rose{background:rgba(244,63,94,0.15);color:var(--rose4);border:1px solid rgba(244,63,94,0.35);}
+.pill-org{background:rgba(234,88,12,0.15);color:var(--org4);border:1px solid rgba(234,88,12,0.35);}
+
+/* BUTTONS */
+.btn{
+  padding:8px 18px;border-radius:44px;font-size:0.85rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;border:none;font-family:'DM Sans',sans-serif;
+  display:inline-flex;align-items:center;gap:7px;
+}
+.btn-pur{
+  background:linear-gradient(135deg,var(--pur2),var(--pur3));
+  color:#fff;box-shadow:0 4px 14px rgba(124,58,237,0.35);
+}
+.btn-pur:hover{box-shadow:0 6px 20px rgba(124,58,237,0.5);transform:translateY(-1px);}
+.btn-amb{
+  background:linear-gradient(135deg,var(--amb2),var(--amb3));
+  color:#fff;box-shadow:0 4px 14px rgba(245,158,11,0.3);
+}
+.btn-amb:hover{box-shadow:0 6px 20px rgba(245,158,11,0.45);transform:translateY(-1px);}
+.btn-eme{
+  background:linear-gradient(135deg,var(--eme2),var(--eme3));
+  color:#fff;box-shadow:0 4px 14px rgba(16,185,129,0.3);
+}
+.btn-eme:hover{box-shadow:0 6px 20px rgba(16,185,129,0.45);transform:translateY(-1px);}
+.btn-out{
+  background:transparent;border:1px solid var(--border-pur);color:var(--pur4);
+}
+.btn-out:hover{background:rgba(168,85,247,0.15);}
+.btn-danger{
+  background:transparent;border:1px solid rgba(244,63,94,0.4);color:var(--rose4);
+}
+.btn-danger:hover{background:rgba(244,63,94,0.15);}
+.btn-sm{padding:5px 12px;font-size:0.78rem;}
+.btn-xs{padding:3px 10px;font-size:0.72rem;}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:0.78rem;font-weight:600;color:var(--text-dim);letter-spacing:0.05em;text-transform:uppercase;}
+.form-control{
+  background:rgba(26,13,46,0.7);border:1px solid var(--border-pur);
+  border-radius:var(--radius-sm);padding:10px 14px;
+  color:var(--text-main);font-family:'DM Sans',sans-serif;font-size:0.88rem;
+  outline:none;transition:border-color 0.2s;
+}
+.form-control:focus{border-color:var(--pur3);box-shadow:0 0 0 3px rgba(168,85,247,0.15);}
+textarea.form-control{resize:vertical;min-height:80px;}
+select.form-control option{background:#1a0d2e;}
+
+/* SEARCH BAR */
+.search-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1.2rem;
+}
+.search-input-wrap{position:relative;flex:1;min-width:200px;}
+.search-input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-dim);}
+.search-input{
+  width:100%;background:rgba(26,13,46,0.7);border:1px solid var(--border-pur);
+  border-radius:44px;padding:9px 14px 9px 40px;color:var(--text-main);
+  font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;
+  transition:border-color 0.2s;
+}
+.search-input:focus{border-color:var(--pur3);}
+
+/* PROGRESS BAR */
+.progress-wrap{background:rgba(168,85,247,0.15);border-radius:44px;height:8px;overflow:hidden;}
+.progress-bar{height:100%;border-radius:44px;
+  background:linear-gradient(90deg,var(--pur2),var(--amb3));transition:width 0.6s ease;}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,7,32,0.85);
+  backdrop-filter:blur(10px);z-index:1000;
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+  animation:fadeIn 0.2s ease;
+}
+.modal-box{
+  background:rgba(26,13,46,0.95);border:1px solid var(--border-pur);
+  border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:560px;
+  box-shadow:0 24px 60px rgba(124,58,237,0.3);
+  animation:slideUp 0.3s ease;
+}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-title{font-size:1.3rem;font-weight:700;margin-bottom:1.5rem;
+  background:linear-gradient(135deg,var(--pur4),var(--amb3));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:rgba(26,13,46,0.95);border:1px solid var(--border-pur);
+  border-radius:44px;padding:12px 24px;z-index:9999;
+  display:flex;align-items:center;gap:10px;font-size:0.88rem;
+  box-shadow:0 8px 32px rgba(124,58,237,0.3);
+  animation:toastIn 0.3s ease;
+}
+@keyframes toastIn{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.toast-icon-pur{color:var(--pur3);}
+.toast-icon-eme{color:var(--eme3);}
+.toast-icon-amb{color:var(--amb3);}
+.toast-icon-rose{color:var(--rose3);}
+
+/* SECTION DIVIDER */
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(168,85,247,0.4),transparent);margin:1.5rem 0;}
+
+/* GANTT */
+.gantt-wrap{overflow-x:auto;}
+.gantt-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.gantt-label{width:140px;font-size:0.82rem;color:var(--text-muted);flex-shrink:0;}
+.gantt-track{flex:1;height:24px;background:rgba(168,85,247,0.1);border-radius:44px;position:relative;min-width:200px;}
+.gantt-bar{height:100%;border-radius:44px;display:flex;align-items:center;padding-left:10px;
+  font-size:0.7rem;font-weight:600;color:#fff;position:absolute;top:0;}
+
+/* 3D CARD PERSPECTIVE */
+.card-3d{transform-style:preserve-3d;perspective:800px;}
+.card-3d:hover .glass-card{transform:translateY(-4px) rotateX(2deg) rotateY(-1deg);}
+
+/* LOGIN */
+.login-wrap{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:1rem;position:relative;z-index:1;
+}
+.login-box{
+  width:100%;max-width:420px;padding:2.5rem;
+  background:rgba(26,13,46,0.8);backdrop-filter:blur(24px);
+  border:1px solid var(--border-pur);border-radius:var(--radius-lg);
+  box-shadow:0 24px 60px rgba(124,58,237,0.3);
+}
+.login-logo{text-align:center;margin-bottom:2rem;}
+.login-3d-icon{
+  width:80px;height:80px;border-radius:20px;margin:0 auto 12px;
+  background:linear-gradient(135deg,var(--pur2),var(--amb3));
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.2rem;
+  animation:float3d 3s ease-in-out infinite;
+  box-shadow:0 8px 32px rgba(124,58,237,0.5);
+}
+@keyframes float3d{
+  0%,100%{transform:translateY(0) rotateY(0deg);}
+  25%{transform:translateY(-8px) rotateY(8deg);}
+  75%{transform:translateY(-4px) rotateY(-8deg);}
+}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;height:220px;}
+
+/* ACCORDION */
+.accordion-item{border:1px solid var(--border-pur);border-radius:var(--radius-md);
+  margin-bottom:8px;overflow:hidden;}
+.accordion-head{padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;
+  align-items:center;background:rgba(168,85,247,0.08);font-weight:500;font-size:0.9rem;}
+.accordion-body{padding:12px 16px;font-size:0.85rem;color:var(--text-muted);
+  display:none;border-top:1px solid rgba(168,85,247,0.15);}
+.accordion-body.open{display:block;}
+
+/* TIMELINE */
+.timeline-item{display:flex;gap:16px;margin-bottom:1rem;padding-bottom:1rem;
+  border-bottom:1px solid rgba(168,85,247,0.12);}
+.timeline-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;font-size:0.9rem;}
+
+/* LIGHT THEME */
+body.light{
+  --bg-deep:#f0ebff;--bg-mid:#e8dffe;--bg-surface:#ddd0ff;
+  --text-main:#1a0d2e;--text-muted:#4a3270;--text-dim:#7c5fa3;
+  --glass-pur:rgba(124,58,237,0.08);
+}
+body.light .glass{background:rgba(240,235,255,0.8);}
+body.light .glass-card{background:rgba(232,223,254,0.7);border-color:rgba(124,58,237,0.25);}
+body.light .sidebar{background:rgba(230,220,255,0.9);}
+body.light .topbar{background:rgba(240,235,255,0.8);}
+body.light .form-control,body.light .search-input,body.light .role-select{
+  background:rgba(240,235,255,0.9);color:var(--text-main);}
+body.light .modal-box{background:rgba(240,235,255,0.97);}
+body.light .data-table td{color:var(--text-muted);}
+
+/* RESPONSIVE */
+@media(max-width:820px){
+  :root{--sidebar-w:0px;}
+  .sidebar{transform:translateX(-270px);width:270px;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;padding:1rem;}
+  .hamburger{display:flex;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr;}
+  .topbar-right{gap:6px;}
+  .badge{display:none;}
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-3d-icon">🏗️</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;
+        background:linear-gradient(135deg,#d8b4fe,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;">
+        ConstruxFlow
+      </div>
+      <div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">Construction Management Suite v3.0</div>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Email / Username</label>
+      <input class="form-control" id="loginUser" value="admin@construxflow.com" placeholder="Enter email">
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Password</label>
+      <input class="form-control" id="loginPass" type="password" value="admin123" placeholder="Enter password">
+    </div>
+    <div class="form-group" style="margin-bottom:1.5rem;">
+      <label>Login As</label>
+      <select class="form-control" id="loginRole">
+        <option value="admin">Admin</option>
+        <option value="mis_admin">MIS Admin</option>
+        <option value="tec">TEC (Technical)</option>
+        <option value="store">Store Manager</option>
+        <option value="purchase">Purchase Officer</option>
+        <option value="accounts">Accounts Manager</option>
+        <option value="machinery">Machinery Supervisor</option>
+        <option value="project">Project Manager</option>
+        <option value="production">Production Head</option>
+        <option value="tender">Tender Manager</option>
+      </select>
+    </div>
+    <button class="btn btn-pur" style="width:100%;justify-content:center;padding:12px;" onclick="doLogin()">
+      <i class="fas fa-sign-in-alt"></i> Sign In to ConstruxFlow
+    </button>
+    <div style="text-align:center;margin-top:1rem;font-size:0.78rem;color:var(--text-dim);">
+      Demo credentials pre-filled · All modules unlocked
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="appWrap" style="display:none;">
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🏗️</div>
+      <div class="logo-text">ConstruxFlow</div>
+    </div>
+    <div id="navList"></div>
+    <div class="sidebar-footer">
+      <div id="sidebarUser">Admin User</div>
+      <div style="margin-top:4px;">v3.0 | Construction ERP</div>
+      <button class="btn btn-out btn-xs" style="margin-top:8px;" onclick="doLogout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main" id="mainArea">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="badge" id="roleBadge">ADMIN</div>
+        <select class="role-select" id="roleSwitcher" onchange="switchRole(this.value)">
+          <option value="admin">Admin</option>
+          <option value="mis_admin">MIS Admin</option>
+          <option value="tec">TEC</option>
+          <option value="store">Store</option>
+          <option value="purchase">Purchase</option>
+          <option value="accounts">Accounts</option>
+          <option value="machinery">Machinery</option>
+          <option value="project">Project Mgt</option>
+          <option value="production">Production</option>
+          <option value="tender">Tender</option>
+        </select>
+        <button class="theme-btn" onclick="toggleTheme()"><i class="fas fa-adjust"></i></button>
+      </div>
+    </div>
+    <div class="module-area" id="moduleArea"></div>
+  </div>
+</div>
+
+<!-- MODAL CONTAINER -->
+<div id="modalContainer"></div>
+
+<script>
+// ===================== GLOBAL STATE =====================
+let currentRole='admin', activeModule='admin', lightMode=false;
+
+const MODULE_META={
+  admin:   {label:'Admin',       icon:'fa-user-cog',     color:'pur'},
+  mis:     {label:'MIS Admin',   icon:'fa-chart-bar',    color:'amb'},
+  tec:     {label:'TEC',         icon:'fa-hard-hat',     color:'eme'},
+  store:   {label:'Store',       icon:'fa-boxes',        color:'pur'},
+  purchase:{label:'Purchase',    icon:'fa-truck',        color:'amb'},
+  accounts:{label:'Accounts',    icon:'fa-rupee-sign',   color:'eme'},
+  machinery:{label:'Machinery',  icon:'fa-cogs',         color:'pur'},
+  project: {label:'Project Mgt', icon:'fa-diagram-project',color:'amb'},
+  production:{label:'Production',icon:'fa-industry',     color:'eme'},
+  tender:  {label:'Tender',      icon:'fa-file-contract',color:'pur'}
+};
+
+// ===================== SEED DATA =====================
+let DB={
+  users:[
+    {id:1,name:'Arjun Sharma',email:'arjun@cf.com',role:'admin',status:'active',joined:'2024-01-15'},
+    {id:2,name:'Priya Mehta',email:'priya@cf.com',role:'mis_admin',status:'active',joined:'2024-02-10'},
+    {id:3,name:'Rahul Kumar',email:'rahul@cf.com',role:'tec',status:'active',joined:'2024-03-05'},
+    {id:4,name:'Sneha Patel',email:'sneha@cf.com',role:'store',status:'inactive',joined:'2024-04-20'},
+    {id:5,name:'Vikram Singh',email:'vikram@cf.com',role:'purchase',status:'active',joined:'2024-05-12'}
+  ],
+  projects:[
+    {id:101,name:'Skyline Towers Phase-1',client:'DLF Ltd',progress:68,budget:125000000,actual:87500000,startDate:'2024-01-10',endDate:'2025-12-31',status:'active'},
+    {id:102,name:'Metro Highway Bridge',client:'NHAI',progress:42,budget:85000000,actual:36000000,startDate:'2024-06-01',endDate:'2026-03-31',status:'active'},
+    {id:103,name:'Green Valley Residency',client:'Prestige Group',progress:95,budget:65000000,actual:62000000,startDate:'2023-06-01',endDate:'2025-06-30',status:'completing'}
+  ],
+  materials:[
+    {id:1,name:'Cement OPC 53',stock:5400,reorder:2000,unit:'Bags',vendor:'Ultratech',rate:380},
+    {id:2,name:'TMT Steel Fe500',stock:1250,reorder:800,unit:'MT',vendor:'TATA Steel',rate:67000},
+    {id:3,name:'Coarse Aggregate',stock:980,reorder:500,unit:'MT',vendor:'Local Quarry',rate:1200},
+    {id:4,name:'River Sand',stock:320,reorder:400,unit:'MT',vendor:'River Sand Co.',rate:2200},
+    {id:5,name:'RMC M30',stock:2100,reorder:1000,unit:'Cum',vendor:'ACC RMC',rate:5800}
+  ],
+  vendors:[
+    {id:1,name:'Ultratech Cement Ltd',contact:'9876543210',gstin:'27AAACL1234A1Z1',category:'Material',rating:5},
+    {id:2,name:'TATA Steel Distributors',contact:'9765432109',gstin:'19AAABT5678B1Z2',category:'Material',rating:4},
+    {id:3,name:'Ravi Contractors',contact:'9654321098',gstin:'29AABCR9012C1Z3',category:'Contractor',rating:4}
+  ],
+  purchaseOrders:[
+    {id:'PO-2025-001',vendor:'Ultratech Cement Ltd',items:'Cement OPC 53 – 5000 Bags',amount:1900000,status:'received',date:'2025-04-01'},
+    {id:'PO-2025-002',vendor:'TATA Steel Distributors',items:'TMT Steel Fe500 – 50 MT',amount:3350000,status:'issued',date:'2025-04-15'},
+    {id:'PO-2025-003',vendor:'Ravi Contractors',items:'Shuttering Work – Slab Level 5',amount:850000,status:'pending',date:'2025-05-01'}
+  ],
+  machinery:[
+    {id:1,name:'Excavator JCB 3CX',regNo:'OD-01-Z-1234',status:'active',project:'Skyline Towers',lastMaint:'2025-03-15',nextMaint:'2025-06-15',fuel:48},
+    {id:2,name:'Tower Crane TC-40',regNo:'OD-02-Z-5678',status:'maintenance',project:'Metro Bridge',lastMaint:'2025-05-01',nextMaint:'2025-05-30',fuel:0},
+    {id:3,name:'Transit Mixer 6 Cum',regNo:'OD-03-Z-9012',status:'idle',project:'—',lastMaint:'2025-02-10',nextMaint:'2025-08-10',fuel:85}
+  ],
+  tenders:[
+    {id:'TDR-2025-01',title:'NH-44 Flyover Construction',client:'NHAI',floatDate:'2025-03-01',submitDate:'2025-04-30',result:'pending',estValue:120000000,status:'submitted'},
+    {id:'TDR-2025-02',title:'Bhubaneswar Smart City Road',client:'BMC',floatDate:'2025-04-15',submitDate:'2025-05-31',result:'won',estValue:85000000,status:'won'},
+    {id:'TDR-2025-03',title:'Residential Township Phase 2',client:'IDCO',floatDate:'2025-05-01',submitDate:'2025-06-15',result:'',estValue:200000000,status:'floating'}
+  ],
+  production:[
+    {id:1,product:'M20 Concrete',target:1200,produced:980,unit:'Cum',project:'Skyline',date:'2025-05'},
+    {id:2,product:'Precast Slab Type-A',target:500,produced:420,unit:'Nos',project:'Skyline',date:'2025-05'},
+    {id:3,product:'M30 Concrete',target:800,produced:560,unit:'Cum',project:'Metro Bridge',date:'2025-05'}
+  ],
+  accounts:[
+    {id:1,type:'Vendor Payment',party:'Ultratech Cement Ltd',amount:1900000,date:'2025-04-10',project:'Skyline',status:'paid'},
+    {id:2,type:'Contractor Bill',party:'Ravi Contractors',amount:850000,date:'2025-04-20',project:'Metro Bridge',status:'pending'},
+    {id:3,type:'Expense',party:'Fuel & Transport',amount:125000,date:'2025-05-01',project:'All Projects',status:'paid'}
+  ],
+  activityLogs:[
+    {action:'System login – Admin User',user:'admin',ts:'2025-05-12T09:00:00'},
+    {action:'New PO created – PO-2025-003',user:'purchase',ts:'2025-05-01T11:30:00'},
+    {action:'Tender TDR-2025-02 marked WON',user:'tender',ts:'2025-04-29T15:00:00'}
+  ],
+  tecReports:[
+    {id:1,date:'2025-05-10',project:'Skyline Towers',report:'Slab casting Level 6 completed. Concrete poured 120 cum. QC passed.',inspector:'Rahul K',status:'approved'},
+    {id:2,date:'2025-05-11',project:'Metro Bridge',report:'Pile driving P-12 to P-14 completed. Rebar inspection done.',inspector:'Rahul K',status:'pending'}
+  ],
+  storeLedger:[
+    {id:1,date:'2025-05-01',material:'Cement OPC 53',type:'inward',qty:5000,project:'—',remark:'PO-2025-001'},
+    {id:2,date:'2025-05-05',material:'Cement OPC 53',type:'outward',qty:800,project:'Skyline Towers',remark:'Level 6 Slab'}
+  ]
+};
+
+// ===================== UTILITY =====================
+function fmt(n){return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n);}
+function fmtN(n){return new Intl.NumberFormat('en-IN').format(n);}
+function statusPill(s){
+  const m={active:'pill-eme',approved:'pill-eme',paid:'pill-eme',received:'pill-eme',won:'pill-eme',
+           pending:'pill-amb',submitted:'pill-amb',issued:'pill-pur',maintenance:'pill-org',
+           inactive:'pill-rose',floating:'pill-pur',idle:'pill-amb',completing:'pill-amb'};
+  return `<span class="pill ${m[s]||'pill-pur'}">${s}</span>`;
+}
+function addLog(action,user){
+  DB.activityLogs.unshift({action,user:user||currentRole,ts:new Date().toISOString()});
+  if(DB.activityLogs.length>100) DB.activityLogs.pop();
+}
+function toast(msg,type='pur'){
+  const icons={pur:'fa-check-circle',eme:'fa-check-circle',amb:'fa-info-circle',rose:'fa-exclamation-circle'};
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`<i class="fas ${icons[type]||'fa-check-circle'} toast-icon-${type}"></i><span>${msg}</span>`;
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(20px)';setTimeout(()=>t.remove(),400);},2800);
+}
+function showModal(html){
+  const o=document.getElementById('modalContainer');
+  o.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()">${html}</div>`;
+}
+function closeModal(){document.getElementById('modalContainer').innerHTML='';}
+window.closeModal=closeModal;
+
+// ===================== LOGIN/LOGOUT =====================
+function doLogin(){
+  const role=document.getElementById('loginRole').value;
+  currentRole=role;
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('appWrap').style.display='flex';
+  buildSidebar();
+  renderModule('admin');
+  addLog('Login',role);
+  toast('Welcome to ConstruxFlow!','eme');
+}
+function doLogout(){
+  document.getElementById('appWrap').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+  toast('Signed out successfully','amb');
+}
+window.doLogout=doLogout;
+
+function switchRole(r){
+  currentRole=r;
+  document.getElementById('roleBadge').textContent=r.toUpperCase().replace('_',' ');
+  document.getElementById('sidebarUser').textContent=r.replace('_',' ').replace(/\b\w/g,l=>l.toUpperCase())+' User';
+  addLog('Role switched to '+r);
+  renderModule(activeModule);
+  toast('Role switched to '+r,'amb');
+}
+
+function toggleTheme(){
+  lightMode=!lightMode;
+  document.body.classList.toggle('light',lightMode);
+  toast(lightMode?'Light mode on':'Dark mode on','amb');
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ===================== SIDEBAR =====================
+function buildSidebar(){
+  const nav=document.getElementById('navList');
+  nav.innerHTML='<div class="nav-section-title">Modules</div>';
+  Object.entries(MODULE_META).forEach(([key,m])=>{
+    const d=document.createElement('div');
+    d.className='nav-item'+(activeModule===key?' active':'');
+    d.dataset.mod=key;
+    d.innerHTML=`<i class="fas ${m.icon}"></i><span>${m.label}</span>`;
+    d.onclick=()=>{
+      activeModule=key;
+      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+      d.classList.add('active');
+      document.getElementById('pageTitle').textContent=m.label;
+      renderModule(key);
+      if(window.innerWidth<=820) document.getElementById('sidebar').classList.remove('open');
+    };
+    nav.appendChild(d);
+  });
+}
+
+// ===================== MODULE ROUTER =====================
+function renderModule(mod){
+  activeModule=mod;
+  const area=document.getElementById('moduleArea');
+  area.style.opacity='0';
+  setTimeout(()=>{
+    const renders={
+      admin:renderAdmin,mis:renderMIS,tec:renderTEC,store:renderStore,
+      purchase:renderPurchase,accounts:renderAccounts,machinery:renderMachinery,
+      project:renderProject,production:renderProduction,tender:renderTender
+    };
+    area.innerHTML=(renders[mod]||renderAdmin)();
+    area.style.opacity='1';
+    area.style.transition='opacity 0.3s';
+    if(mod==='mis') initMISCharts();
+    if(mod==='project') initGantt();
+    if(mod==='production') initProdChart();
+    addLog('Viewed module: '+mod);
+  },150);
+}
+
+// ===================== 1. ADMIN =====================
+function renderAdmin(){
+  if(currentRole!=='admin') return accessDenied();
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Admin <span>Console</span></div>
+    <button class="btn btn-pur" onclick="openAddUser()"><i class="fas fa-user-plus"></i> New User</button>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">👥</div><div class="stat-val">${DB.users.length}</div><div class="stat-label">Total Users</div><div class="stat-trend trend-up"><i class="fas fa-arrow-up"></i> +2 this month</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">✅</div><div class="stat-val">${DB.users.filter(u=>u.status==='active').length}</div><div class="stat-label">Active Users</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">🔑</div><div class="stat-val">10</div><div class="stat-label">Role Types</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">📋</div><div class="stat-val">${DB.activityLogs.length}</div><div class="stat-label">Log Entries</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1.1rem;">👥 User Management</h3></div>
+    <div class="search-bar">
+      <div class="search-input-wrap"><i class="fas fa-search"></i><input class="search-input" placeholder="Search users..." oninput="filterUsers(this.value)"></div>
+      <select class="form-control" style="max-width:160px;border-radius:44px;" onchange="filterUsers('',this.value)">
+        <option value="">All Roles</option>
+        <option>admin</option><option>mis_admin</option><option>tec</option>
+        <option>store</option><option>purchase</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" id="userTable">
+        <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="userTbody">${userRows()}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1.1rem;">📋 System Activity Logs</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Timestamp</th><th>User</th><th>Action</th></tr></thead>
+        <tbody>${DB.activityLogs.slice(0,10).map(l=>`
+          <tr><td style="font-size:0.78rem;">${l.ts.slice(0,16).replace('T',' ')}</td><td>${l.user}</td><td>${l.action}</td></tr>
+        `).join('')}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1.1rem;">⚙️ System Settings</h3></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-eme" onclick="backupData()"><i class="fas fa-database"></i> Backup (JSON)</button>
+      <button class="btn btn-amb" onclick="toast('Data restored to demo state','eme')"><i class="fas fa-undo"></i> Restore Demo</button>
+      <button class="btn btn-out" onclick="toast('Company profile saved','eme')"><i class="fas fa-building"></i> Company Profile</button>
+    </div>
+    <div class="divider"></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Company Name</label><input class="form-control" value="ConstruxFlow Pvt. Ltd."></div>
+      <div class="form-group"><label>GST Number</label><input class="form-control" value="21AABCC1234D1Z5"></div>
+      <div class="form-group"><label>Address</label><input class="form-control" value="Plot 42, Janpath, Bhubaneswar, Odisha"></div>
+      <div class="form-group"><label>Contact Email</label><input class="form-control" value="admin@construxflow.com"></div>
+    </div>
+    <div style="margin-top:1rem;"><button class="btn btn-pur" onclick="toast('Company profile updated!','eme')">Save Settings</button></div>
+  </div>`;
+}
+function userRows(filter='',role=''){
+  return DB.users.filter(u=>(u.name.toLowerCase().includes(filter)||u.email.includes(filter))&&(!role||u.role===role)).map(u=>`
+    <tr>
+      <td>${u.id}</td>
+      <td><strong>${u.name}</strong></td>
+      <td style="color:var(--text-dim);">${u.email}</td>
+      <td>${statusPill(u.role.replace('_',' '))}</td>
+      <td>${u.joined}</td>
+      <td>${statusPill(u.status)}</td>
+      <td><button class="btn btn-out btn-xs" onclick="editUser(${u.id})"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-danger btn-xs" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i></button></td>
+    </tr>`).join('');
+}
+window.filterUsers=(v,r='')=>{const b=document.getElementById('userTbody');if(b)b.innerHTML=userRows(v,r);};
+window.deleteUser=(id)=>{DB.users=DB.users.filter(u=>u.id!==id);document.getElementById('userTbody').innerHTML=userRows();toast('User removed','rose');addLog('Deleted user '+id);};
+window.editUser=(id)=>{const u=DB.users.find(x=>x.id===id);if(!u)return;
+  showModal(`<div class="modal-box">
+    <div class="modal-title">✏️ Edit User</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Name</label><input class="form-control" id="eu_name" value="${u.name}"></div>
+      <div class="form-group"><label>Email</label><input class="form-control" id="eu_email" value="${u.email}"></div>
+      <div class="form-group"><label>Role</label>
+        <select class="form-control" id="eu_role">
+          ${['admin','mis_admin','tec','store','purchase','accounts','machinery','project','production','tender'].map(r=>`<option${u.role===r?' selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select class="form-control" id="eu_status"><option${u.status==='active'?' selected':''}>active</option><option${u.status==='inactive'?' selected':''}>inactive</option></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="saveUser(${id})">Save Changes</button>
+    </div>
+  </div>`);
+};
+window.saveUser=(id)=>{
+  const u=DB.users.find(x=>x.id===id);
+  u.name=document.getElementById('eu_name').value;
+  u.email=document.getElementById('eu_email').value;
+  u.role=document.getElementById('eu_role').value;
+  u.status=document.getElementById('eu_status').value;
+  closeModal();toast('User updated!','eme');addLog('Updated user '+id);
+  document.getElementById('userTbody').innerHTML=userRows();
+};
+window.openAddUser=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">➕ Add New User</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Full Name</label><input class="form-control" id="au_name" placeholder="Enter full name"></div>
+      <div class="form-group"><label>Email</label><input class="form-control" id="au_email" placeholder="user@company.com"></div>
+      <div class="form-group"><label>Role</label>
+        <select class="form-control" id="au_role">
+          ${['admin','mis_admin','tec','store','purchase','accounts','machinery','project','production','tender'].map(r=>`<option>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Password</label><input class="form-control" type="password" id="au_pass" placeholder="Set password"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="addUserSave()"><i class="fas fa-user-plus"></i> Add User</button>
+    </div>
+  </div>`);
+};
+window.addUserSave=()=>{
+  const name=document.getElementById('au_name').value;
+  if(!name){toast('Enter name','rose');return;}
+  DB.users.push({id:Date.now(),name,email:document.getElementById('au_email').value,
+    role:document.getElementById('au_role').value,status:'active',joined:new Date().toISOString().slice(0,10)});
+  closeModal();toast('User added!','eme');addLog('Added user '+name);
+  document.getElementById('userTbody').innerHTML=userRows();
+};
+window.backupData=()=>{
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='construxflow_backup.json';a.click();
+  toast('Backup downloaded!','eme');addLog('Data backup triggered');
+};
+
+// ===================== 2. MIS ADMIN =====================
+function renderMIS(){
+  const p=DB.projects;
+  const totalBudget=p.reduce((s,x)=>s+x.budget,0);
+  const totalActual=p.reduce((s,x)=>s+x.actual,0);
+  return `
+  <div class="mod-header"><div class="mod-title">MIS <span>Dashboard</span></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-eme btn-sm" onclick="exportReport()"><i class="fas fa-file-excel"></i> Export</button>
+      <button class="btn btn-amb btn-sm" onclick="toast('PDF report generated','eme')"><i class="fas fa-file-pdf"></i> PDF</button>
+    </div>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">🏗️</div><div class="stat-val">${p.length}</div><div class="stat-label">Active Projects</div><div class="stat-trend trend-up"><i class="fas fa-arrow-up"></i> +1 this qtr</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">💰</div><div class="stat-val">₹${(totalBudget/10000000).toFixed(1)}Cr</div><div class="stat-label">Total Budget</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">📊</div><div class="stat-val">${Math.round(totalActual/totalBudget*100)}%</div><div class="stat-label">Budget Utilization</div><div class="stat-trend trend-dn"><i class="fas fa-minus"></i> On track</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">📦</div><div class="stat-val">${fmtN(DB.materials.reduce((s,m)=>s+m.stock,0))}</div><div class="stat-label">Total Stock Units</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;margin-bottom:1.5rem;">
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">📊 Budget vs Actual (Cr)</h3>
+      <div class="chart-wrap"><canvas id="budgetChart"></canvas></div>
+    </div>
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">📈 Project Progress</h3>
+      <div class="chart-wrap"><canvas id="progressChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <h3 style="margin-bottom:1rem;font-size:1rem;">🏗️ Project-wise KPIs</h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Project</th><th>Client</th><th>Budget</th><th>Spent</th><th>Variance</th><th>Progress</th><th>Status</th></tr></thead>
+        <tbody>${p.map(pr=>{
+          const vr=((pr.actual/pr.budget-1)*100).toFixed(1);
+          return `<tr>
+            <td><strong>${pr.name}</strong></td>
+            <td>${pr.client}</td>
+            <td>${fmt(pr.budget)}</td>
+            <td>${fmt(pr.actual)}</td>
+            <td style="color:${vr>0?'var(--rose3)':'var(--eme3)'}">${vr>0?'+':''}${vr}%</td>
+            <td><div class="progress-wrap" style="width:100px;display:inline-block;vertical-align:middle;"><div class="progress-bar" style="width:${pr.progress}%"></div></div> ${pr.progress}%</td>
+            <td>${statusPill(pr.status)}</td>
+          </tr>`;}).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;">
+    <h3 style="margin-bottom:1rem;font-size:1rem;">📦 Procurement Summary</h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>PO#</th><th>Vendor</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${DB.purchaseOrders.map(po=>`
+          <tr><td>${po.id}</td><td>${po.vendor}</td><td>${fmt(po.amount)}</td><td>${statusPill(po.status)}</td><td>${po.date}</td></tr>
+        `).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function initMISCharts(){
+  const p=DB.projects;
+  const colors=['rgba(168,85,247,0.8)','rgba(245,158,11,0.8)','rgba(16,185,129,0.8)'];
+  const opts={plugins:{legend:{labels:{color:'var(--text-muted)',font:{size:11}}}},scales:{x:{grid:{color:'rgba(168,85,247,0.1)'},ticks:{color:'var(--text-muted)'}},y:{grid:{color:'rgba(168,85,247,0.1)'},ticks:{color:'var(--text-muted)'}}}};
+  const bc=document.getElementById('budgetChart');
+  if(bc) new Chart(bc,{type:'bar',data:{labels:p.map(x=>x.name.split(' ').slice(0,2).join(' ')),datasets:[
+    {label:'Budget',data:p.map(x=>+(x.budget/10000000).toFixed(1)),backgroundColor:'rgba(168,85,247,0.6)',borderRadius:6},
+    {label:'Actual',data:p.map(x=>+(x.actual/10000000).toFixed(1)),backgroundColor:'rgba(245,158,11,0.6)',borderRadius:6}
+  ]},options:{...opts,responsive:true,maintainAspectRatio:false}});
+  const pc=document.getElementById('progressChart');
+  if(pc) new Chart(pc,{type:'doughnut',data:{labels:p.map(x=>x.name.split(' ').slice(0,2).join(' ')),datasets:[{data:p.map(x=>x.progress),backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'var(--text-muted)',font:{size:11}}}}}});
+}
+window.exportReport=()=>{
+  const csv=[['Project','Budget','Actual','Progress'],
+    ...DB.projects.map(p=>[p.name,p.budget,p.actual,p.progress+'%'])].map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mis_report.csv';a.click();
+  toast('MIS report exported!','eme');
+};
+
+// ===================== 3. TEC =====================
+function renderTEC(){
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Technical <span>(TEC)</span> Module</div>
+    <button class="btn btn-pur" onclick="openDWR()"><i class="fas fa-plus"></i> Daily Work Report</button>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">📋</div><div class="stat-val">${DB.tecReports.length}</div><div class="stat-label">Reports This Month</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">✅</div><div class="stat-val">${DB.tecReports.filter(r=>r.status==='approved').length}</div><div class="stat-label">Approved</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">⏳</div><div class="stat-val">${DB.tecReports.filter(r=>r.status==='pending').length}</div><div class="stat-label">Pending Review</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">📐</div><div class="stat-val">12</div><div class="stat-label">Drawings Uploaded</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">📝 Daily Work Reports</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Project</th><th>Report Summary</th><th>Inspector</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="dwrTbody">${DB.tecReports.map(r=>`
+          <tr>
+            <td>${r.date}</td><td>${r.project}</td>
+            <td style="max-width:250px;font-size:0.8rem;">${r.report.slice(0,80)}...</td>
+            <td>${r.inspector}</td><td>${statusPill(r.status)}</td>
+            <td>
+              <button class="btn btn-out btn-xs" onclick="viewReport(${r.id})"><i class="fas fa-eye"></i></button>
+              <button class="btn btn-eme btn-xs" onclick="approveDWR(${r.id})"><i class="fas fa-check"></i></button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;">
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">✅ QC Checklist</h3>
+      ${['Concrete Slump Test (IS:7320)','Rebar Inspection (IS:1786)','Shuttering Alignment Check','Cover Block Placement','Water-Cement Ratio Verification','Curing Compliance Check'].map((item,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(168,85,247,0.1);">
+          <input type="checkbox" id="qc${i}" ${i<4?'checked':''} style="accent-color:var(--pur3);width:16px;height:16px;">
+          <label for="qc${i}" style="font-size:0.88rem;cursor:pointer;">${item}</label>
+        </div>`).join('')}
+      <button class="btn btn-pur" style="margin-top:1rem;" onclick="toast('QC Checklist submitted!','eme')">Submit QC Report</button>
+    </div>
+
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">📂 Drawing Repository</h3>
+      ${['Structural Drawing – Skyline L6.pdf','MEP Drawing – Block B.dwg','Foundation Plan – Metro Bridge.pdf','Precast Detail – Type A.pdf'].map((f,i)=>`
+        <div class="glass-amb" style="padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-radius:var(--radius-sm);">
+          <div><i class="fas fa-file-pdf" style="color:var(--org3);margin-right:8px;"></i><span style="font-size:0.85rem;">${f}</span></div>
+          <button class="btn btn-out btn-xs" onclick="toast('Download started','eme')"><i class="fas fa-download"></i></button>
+        </div>`).join('')}
+      <button class="btn btn-eme" style="margin-top:0.5rem;" onclick="toast('Upload drawing (simulated)','amb')"><i class="fas fa-upload"></i> Upload Drawing</button>
+    </div>
+
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">🔍 Site Inspection Log</h3>
+      ${[{date:'2025-05-11',site:'Skyline Tower – Level 6',issue:'Minor honey-combing in column C-14',severity:'low'},
+         {date:'2025-05-08',site:'Metro Bridge – Abutment A',issue:'Rebar spacing deviation > 5mm',severity:'medium'}].map(l=>`
+        <div class="glass-eme" style="padding:10px 14px;margin-bottom:8px;border-radius:var(--radius-sm);">
+          <div style="font-size:0.75rem;color:var(--text-dim);">${l.date} · ${statusPill(l.severity==='low'?'approved':'pending')}</div>
+          <div style="font-weight:500;font-size:0.88rem;margin-top:4px;">${l.site}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">${l.issue}</div>
+        </div>`).join('')}
+      <button class="btn btn-pur" onclick="toast('Inspection log added','eme')"><i class="fas fa-plus"></i> Add Inspection</button>
+    </div>
+  </div>`;
+}
+window.openDWR=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">📝 New Daily Work Report</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Date</label><input class="form-control" type="date" id="dwr_date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group"><label>Project</label>
+        <select class="form-control" id="dwr_proj">${DB.projects.map(p=>`<option>${p.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Work Report</label><textarea class="form-control" id="dwr_report" rows="4" placeholder="Describe work done today..."></textarea></div>
+      <div class="form-group"><label>Inspector Name</label><input class="form-control" id="dwr_insp" value="Rahul Kumar"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="saveDWR()">Submit Report</button>
+    </div>
+  </div>`);
+};
+window.saveDWR=()=>{
+  const report=document.getElementById('dwr_report').value;
+  if(!report){toast('Enter report details','rose');return;}
+  DB.tecReports.unshift({id:Date.now(),date:document.getElementById('dwr_date').value,
+    project:document.getElementById('dwr_proj').value,report,
+    inspector:document.getElementById('dwr_insp').value,status:'pending'});
+  closeModal();toast('DWR submitted!','eme');renderModule('tec');
+};
+window.viewReport=(id)=>{const r=DB.tecReports.find(x=>x.id===id);if(!r)return;
+  showModal(`<div class="modal-box"><div class="modal-title">📋 Report Detail</div>
+    <div style="color:var(--text-muted);font-size:0.9rem;line-height:1.7;">${r.report}</div>
+    <div style="margin-top:1rem;font-size:0.8rem;color:var(--text-dim);">Inspector: ${r.inspector} · ${r.date}</div>
+    <div class="modal-actions"><button class="btn btn-pur" onclick="closeModal()">Close</button></div>
+  </div>`);
+};
+window.approveDWR=(id)=>{const r=DB.tecReports.find(x=>x.id===id);if(r){r.status='approved';toast('Report approved!','eme');document.getElementById('dwrTbody').innerHTML=DB.tecReports.map(r=>`<tr><td>${r.date}</td><td>${r.project}</td><td style="max-width:250px;font-size:0.8rem;">${r.report.slice(0,80)}...</td><td>${r.inspector}</td><td>${statusPill(r.status)}</td><td><button class="btn btn-out btn-xs" onclick="viewReport(${r.id})"><i class="fas fa-eye"></i></button><button class="btn btn-eme btn-xs" onclick="approveDWR(${r.id})"><i class="fas fa-check"></i></button></td></tr>`).join('');}};
+
+// ===================== 4. STORE =====================
+function renderStore(){
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Store <span>Management</span></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-pur" onclick="openInward()"><i class="fas fa-arrow-down"></i> Inward</button>
+      <button class="btn btn-amb" onclick="openOutward()"><i class="fas fa-arrow-up"></i> Outward</button>
+    </div>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">📦</div><div class="stat-val">${DB.materials.length}</div><div class="stat-label">Material Types</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">⚠️</div><div class="stat-val">${DB.materials.filter(m=>m.stock<m.reorder).length}</div><div class="stat-label">Low Stock Alerts</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">📋</div><div class="stat-val">${DB.storeLedger.length}</div><div class="stat-label">Ledger Entries</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">💰</div><div class="stat-val">${fmt(DB.materials.reduce((s,m)=>s+m.stock*m.rate,0))}</div><div class="stat-label">Stock Value</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">📦 Stock Levels</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Material</th><th>Stock</th><th>Reorder Level</th><th>Unit</th><th>Rate</th><th>Value</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="stockTbody">${materialRows()}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">📒 Store Ledger</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Material</th><th>Type</th><th>Quantity</th><th>Project</th><th>Remark</th></tr></thead>
+        <tbody>${DB.storeLedger.map(l=>`
+          <tr><td>${l.date}</td><td>${l.material}</td>
+          <td>${statusPill(l.type==='inward'?'approved':'pending')}</td>
+          <td>${fmtN(l.qty)}</td><td>${l.project}</td><td style="color:var(--text-dim);">${l.remark}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function materialRows(){
+  return DB.materials.map(m=>`
+    <tr>
+      <td><strong>${m.name}</strong></td>
+      <td>${fmtN(m.stock)}</td><td>${fmtN(m.reorder)}</td><td>${m.unit}</td>
+      <td>₹${fmtN(m.rate)}</td><td>${fmt(m.stock*m.rate)}</td>
+      <td>${m.stock<m.reorder?statusPill('pending'):statusPill('approved')}</td>
+      <td>
+        <button class="btn btn-eme btn-xs" onclick="issueMaterial(${m.id})">Issue</button>
+        <button class="btn btn-out btn-xs" onclick="editMaterial(${m.id})"><i class="fas fa-edit"></i></button>
+      </td>
+    </tr>`).join('');
+}
+window.openInward=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">📥 Material Inward</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Material</label>
+        <select class="form-control" id="in_mat">${DB.materials.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Quantity</label><input class="form-control" type="number" id="in_qty" placeholder="Enter quantity"></div>
+      <div class="form-group"><label>Date</label><input class="form-control" type="date" id="in_date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group"><label>PO Reference</label><input class="form-control" id="in_po" placeholder="PO-2025-XXX"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="saveInward()">Record Inward</button>
+    </div>
+  </div>`);
+};
+window.saveInward=()=>{
+  const matId=+document.getElementById('in_mat').value;
+  const qty=+document.getElementById('in_qty').value;
+  if(!qty){toast('Enter quantity','rose');return;}
+  const mat=DB.materials.find(m=>m.id===matId);
+  mat.stock+=qty;
+  DB.storeLedger.push({id:Date.now(),date:document.getElementById('in_date').value,
+    material:mat.name,type:'inward',qty,project:'—',remark:document.getElementById('in_po').value});
+  closeModal();toast(`${qty} ${mat.unit} received!`,'eme');addLog('Material inward: '+mat.name);renderModule('store');
+};
+window.openOutward=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">📤 Issue Material to Project</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Material</label>
+        <select class="form-control" id="out_mat">${DB.materials.map(m=>`<option value="${m.id}">${m.name} (${fmtN(m.stock)} ${m.unit})</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Project</label>
+        <select class="form-control" id="out_proj">${DB.projects.map(p=>`<option>${p.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Quantity</label><input class="form-control" type="number" id="out_qty" placeholder="Enter quantity"></div>
+      <div class="form-group"><label>Date</label><input class="form-control" type="date" id="out_date" value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-amb" onclick="saveOutward()">Issue Material</button>
+    </div>
+  </div>`);
+};
+window.saveOutward=()=>{
+  const matId=+document.getElementById('out_mat').value;
+  const qty=+document.getElementById('out_qty').value;
+  const mat=DB.materials.find(m=>m.id===matId);
+  if(!qty){toast('Enter quantity','rose');return;}
+  if(qty>mat.stock){toast('Insufficient stock!','rose');return;}
+  mat.stock-=qty;
+  const proj=document.getElementById('out_proj').value;
+  DB.storeLedger.push({id:Date.now(),date:document.getElementById('out_date').value,
+    material:mat.name,type:'outward',qty,project:proj,remark:'Site issue'});
+  closeModal();toast(`${qty} ${mat.unit} issued to ${proj.split(' ')[0]}`,'eme');renderModule('store');
+};
+window.issueMaterial=(id)=>{const mat=DB.materials.find(m=>m.id===id);document.getElementById('out_mat') ? null : openOutward();};
+window.editMaterial=(id)=>{toast('Edit material (simulated)','amb');};
+
+// ===================== 5. PURCHASE =====================
+function renderPurchase(){
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Purchase <span>Management</span></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-pur" onclick="openNewPR()"><i class="fas fa-plus"></i> New PR</button>
+      <button class="btn btn-amb" onclick="openNewPO()"><i class="fas fa-file-invoice"></i> New PO</button>
+    </div>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">📄</div><div class="stat-val">${DB.purchaseOrders.length}</div><div class="stat-label">Purchase Orders</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">🏢</div><div class="stat-val">${DB.vendors.length}</div><div class="stat-label">Vendors</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">💰</div><div class="stat-val">${fmt(DB.purchaseOrders.reduce((s,p)=>s+p.amount,0))}</div><div class="stat-label">Total PO Value</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">✅</div><div class="stat-val">${DB.purchaseOrders.filter(p=>p.status==='received').length}</div><div class="stat-label">GRN Received</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">📋 Purchase Orders</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>PO#</th><th>Vendor</th><th>Items</th><th>Amount</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="poTbody">${poRows()}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">🏢 Vendor Management</h3>
+      <button class="btn btn-eme btn-sm" onclick="openAddVendor()"><i class="fas fa-plus"></i> Add Vendor</button>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Vendor</th><th>Contact</th><th>GSTIN</th><th>Category</th><th>Rating</th><th>Actions</th></tr></thead>
+        <tbody>${DB.vendors.map(v=>`
+          <tr><td><strong>${v.name}</strong></td><td>${v.contact}</td><td style="font-size:0.78rem;">${v.gstin}</td>
+          <td>${statusPill(v.category.toLowerCase())}</td>
+          <td>${'⭐'.repeat(v.rating)}</td>
+          <td><button class="btn btn-out btn-xs" onclick="toast('Edit vendor (simulated)','amb')"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-danger btn-xs" onclick="toast('Vendor removed','rose')"><i class="fas fa-trash"></i></button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function poRows(){
+  return DB.purchaseOrders.map(po=>`
+    <tr><td><strong>${po.id}</strong></td><td>${po.vendor}</td>
+    <td style="font-size:0.8rem;max-width:200px;">${po.items}</td>
+    <td>${fmt(po.amount)}</td><td>${po.date}</td><td>${statusPill(po.status)}</td>
+    <td>
+      <button class="btn btn-eme btn-xs" onclick="receiveGRN('${po.id}')">GRN</button>
+      <button class="btn btn-out btn-xs" onclick="toast('PO printed','amb')"><i class="fas fa-print"></i></button>
+    </td></tr>`).join('');
+}
+window.receiveGRN=(id)=>{const po=DB.purchaseOrders.find(p=>p.id===id);if(po){po.status='received';toast('GRN recorded!','eme');document.getElementById('poTbody').innerHTML=poRows();addLog('GRN recorded for '+id);}};
+window.openNewPO=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">📄 Create Purchase Order</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Vendor</label>
+        <select class="form-control" id="po_vendor">${DB.vendors.map(v=>`<option>${v.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Item Description</label><textarea class="form-control" id="po_items" rows="2" placeholder="Material – Quantity & Spec"></textarea></div>
+      <div class="form-group"><label>Amount (₹)</label><input class="form-control" type="number" id="po_amount" placeholder="0"></div>
+      <div class="form-group"><label>Date</label><input class="form-control" type="date" id="po_date" value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="savePO()">Create PO</button>
+    </div>
+  </div>`);
+};
+window.savePO=()=>{
+  const vendor=document.getElementById('po_vendor').value;
+  const amount=+document.getElementById('po_amount').value;
+  if(!amount){toast('Enter amount','rose');return;}
+  const id='PO-2025-00'+(DB.purchaseOrders.length+1);
+  DB.purchaseOrders.unshift({id,vendor,items:document.getElementById('po_items').value,amount,
+    status:'issued',date:document.getElementById('po_date').value});
+  closeModal();toast(`${id} created!`,'eme');addLog('PO created: '+id);document.getElementById('poTbody').innerHTML=poRows();
+};
+window.openNewPR=()=>{toast('Purchase Request form opened (simulated)','amb');};
+window.openAddVendor=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">🏢 Add New Vendor</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Vendor Name</label><input class="form-control" id="vn_name" placeholder="Company name"></div>
+      <div class="form-group"><label>Contact</label><input class="form-control" id="vn_contact" placeholder="Mobile number"></div>
+      <div class="form-group"><label>GSTIN</label><input class="form-control" id="vn_gst" placeholder="27AAAAA0000A1Z5"></div>
+      <div class="form-group"><label>Category</label>
+        <select class="form-control" id="vn_cat"><option>Material</option><option>Contractor</option><option>Equipment</option><option>Service</option></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-eme" onclick="saveVendor()">Add Vendor</button>
+    </div>
+  </div>`);
+};
+window.saveVendor=()=>{
+  const name=document.getElementById('vn_name').value;
+  if(!name){toast('Enter vendor name','rose');return;}
+  DB.vendors.push({id:Date.now(),name,contact:document.getElementById('vn_contact').value,
+    gstin:document.getElementById('vn_gst').value,category:document.getElementById('vn_cat').value,rating:3});
+  closeModal();toast('Vendor added!','eme');renderModule('purchase');
+};
+
+// ===================== 6. ACCOUNTS =====================
+function renderAccounts(){
+  const total=DB.accounts.reduce((s,a)=>s+a.amount,0);
+  const paid=DB.accounts.filter(a=>a.status==='paid').reduce((s,a)=>s+a.amount,0);
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Accounts & <span>Finance</span></div>
+    <button class="btn btn-pur" onclick="openAddTxn()"><i class="fas fa-plus"></i> Add Transaction</button>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">💸</div><div class="stat-val">${fmt(total)}</div><div class="stat-label">Total Transactions</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">✅</div><div class="stat-val">${fmt(paid)}</div><div class="stat-label">Paid Amount</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">⏳</div><div class="stat-val">${fmt(total-paid)}</div><div class="stat-label">Outstanding</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">📊</div><div class="stat-val">${Math.round(paid/total*100)}%</div><div class="stat-label">Payment Rate</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">💳 Transaction Ledger</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Type</th><th>Party</th><th>Amount</th><th>Date</th><th>Project</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="acTbody">${acRows()}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;">
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">🏗️ Project Cost Centers</h3>
+      ${DB.projects.map(p=>`
+        <div style="margin-bottom:1rem;">
+          <div class="flex-bw" style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:0.85rem;">${p.name.split(' ')[0]}</span>
+            <span style="font-size:0.85rem;color:var(--pur4);">${fmt(p.actual)}</span>
+          </div>
+          <div class="progress-wrap"><div class="progress-bar" style="width:${Math.round(p.actual/p.budget*100)}%"></div></div>
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:2px;">${Math.round(p.actual/p.budget*100)}% of ${fmt(p.budget)}</div>
+        </div>`).join('')}
+    </div>
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">📊 Expense Summary</h3>
+      ${[{head:'Material Cost',amount:4200000,pct:48},{head:'Labour & Contractor',amount:3100000,pct:35},{head:'Machinery & Fuel',amount:1200000,pct:14},{head:'Overhead',amount:280000,pct:3}].map(e=>`
+        <div style="margin-bottom:0.8rem;">
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:3px;">
+            <span>${e.head}</span><span style="color:var(--amb3);">${fmt(e.amount)}</span>
+          </div>
+          <div class="progress-wrap"><div class="progress-bar" style="width:${e.pct}%"></div></div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+function acRows(){
+  return DB.accounts.map(a=>`
+    <tr><td>${a.id}</td><td>${a.type}</td><td><strong>${a.party}</strong></td>
+    <td>${fmt(a.amount)}</td><td>${a.date}</td><td>${a.project}</td>
+    <td>${statusPill(a.status)}</td>
+    <td>${a.status==='pending'?`<button class="btn btn-eme btn-xs" onclick="markPaid(${a.id})">Pay Now</button>`:'<span style="color:var(--eme3);font-size:0.8rem;">✔ Paid</span>'}</td>
+    </tr>`).join('');
+}
+window.markPaid=(id)=>{const a=DB.accounts.find(x=>x.id===id);if(a){a.status='paid';toast('Payment marked!','eme');document.getElementById('acTbody').innerHTML=acRows();addLog('Payment marked for '+a.party);}};
+window.openAddTxn=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">💳 Add Transaction</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Type</label>
+        <select class="form-control" id="txn_type"><option>Vendor Payment</option><option>Contractor Bill</option><option>Expense</option><option>Advance</option></select>
+      </div>
+      <div class="form-group"><label>Party / Description</label><input class="form-control" id="txn_party" placeholder="Vendor or description"></div>
+      <div class="form-group"><label>Amount (₹)</label><input class="form-control" type="number" id="txn_amount" placeholder="0"></div>
+      <div class="form-group"><label>Project</label>
+        <select class="form-control" id="txn_proj">${DB.projects.map(p=>`<option>${p.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Date</label><input class="form-control" type="date" id="txn_date" value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="saveTxn()">Save Transaction</button>
+    </div>
+  </div>`);
+};
+window.saveTxn=()=>{
+  const amount=+document.getElementById('txn_amount').value;
+  if(!amount){toast('Enter amount','rose');return;}
+  DB.accounts.push({id:DB.accounts.length+10,type:document.getElementById('txn_type').value,
+    party:document.getElementById('txn_party').value,amount,
+    date:document.getElementById('txn_date').value,
+    project:document.getElementById('txn_proj').value,status:'pending'});
+  closeModal();toast('Transaction added!','eme');renderModule('accounts');
+};
+
+// ===================== 7. MACHINERY =====================
+function renderMachinery(){
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Machinery <span>Registry</span></div>
+    <button class="btn btn-pur" onclick="openAddMachine()"><i class="fas fa-plus"></i> Add Equipment</button>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">🏗️</div><div class="stat-val">${DB.machinery.length}</div><div class="stat-label">Total Equipment</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">✅</div><div class="stat-val">${DB.machinery.filter(m=>m.status==='active').length}</div><div class="stat-label">Active</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">🔧</div><div class="stat-val">${DB.machinery.filter(m=>m.status==='maintenance').length}</div><div class="stat-label">Under Maintenance</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">⛽</div><div class="stat-val">${DB.machinery.reduce((s,m)=>s+m.fuel,0)}L</div><div class="stat-label">Total Fuel Stock</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">🏗️ Equipment List</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Equipment</th><th>Reg No.</th><th>Status</th><th>Site/Project</th><th>Last Maint.</th><th>Next Maint.</th><th>Fuel (L)</th><th>Actions</th></tr></thead>
+        <tbody id="machTbody">${machineRows()}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;">
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">🔧 Maintenance Schedule</h3>
+      ${DB.machinery.map(m=>`
+        <div class="glass-amb" style="padding:12px;margin-bottom:8px;border-radius:var(--radius-sm);">
+          <div style="font-weight:600;font-size:0.88rem;">${m.name}</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;">
+            Next due: <span style="color:var(--amb3);">${m.nextMaint}</span>
+          </div>
+          <div class="progress-wrap" style="margin-top:6px;">
+            <div class="progress-bar" style="width:${m.status==='active'?70:m.status==='maintenance'?100:30}%;background:${m.status==='maintenance'?'linear-gradient(90deg,var(--org3),var(--rose3))':'linear-gradient(90deg,var(--pur2),var(--amb3))'}"></div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">⛽ Fuel Log</h3>
+      <button class="btn btn-pur btn-sm" onclick="openFuelLog()"><i class="fas fa-plus"></i> Add Fuel Entry</button>
+      <div style="margin-top:1rem;">
+        ${[{date:'2025-05-10',machine:'JCB 3CX',liters:120,cost:9000},
+           {date:'2025-05-09',machine:'Transit Mixer',liters:80,cost:6000}].map(f=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(168,85,247,0.12);">
+            <div><div style="font-size:0.85rem;font-weight:500;">${f.machine}</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);">${f.date}</div></div>
+            <div style="text-align:right;"><div style="color:var(--amb3);">${f.liters}L</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);">₹${f.cost}</div></div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+function machineRows(){
+  return DB.machinery.map(m=>`
+    <tr><td><strong>${m.name}</strong></td><td>${m.regNo}</td><td>${statusPill(m.status)}</td>
+    <td>${m.project}</td><td>${m.lastMaint}</td><td>${m.nextMaint}</td>
+    <td>${m.fuel}L</td>
+    <td>
+      <button class="btn btn-amb btn-xs" onclick="allocateMachine(${m.id})">Allocate</button>
+      <button class="btn btn-out btn-xs" onclick="toast('Maintenance logged','eme')"><i class="fas fa-wrench"></i></button>
+    </td></tr>`).join('');
+}
+window.openAddMachine=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">🏗️ Add Equipment</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Equipment Name</label><input class="form-control" id="mach_name" placeholder="e.g. Excavator JCB 3DX"></div>
+      <div class="form-group"><label>Registration No.</label><input class="form-control" id="mach_reg" placeholder="OD-01-Z-XXXX"></div>
+      <div class="form-group"><label>Status</label>
+        <select class="form-control" id="mach_status"><option>active</option><option>idle</option><option>maintenance</option></select>
+      </div>
+      <div class="form-group"><label>Assigned Project</label>
+        <select class="form-control" id="mach_proj"><option>—</option>${DB.projects.map(p=>`<option>${p.name}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="saveMachine()">Add Equipment</button>
+    </div>
+  </div>`);
+};
+window.saveMachine=()=>{
+  const name=document.getElementById('mach_name').value;
+  if(!name){toast('Enter equipment name','rose');return;}
+  DB.machinery.push({id:Date.now(),name,regNo:document.getElementById('mach_reg').value,
+    status:document.getElementById('mach_status').value,
+    project:document.getElementById('mach_proj').value,
+    lastMaint:new Date().toISOString().slice(0,10),nextMaint:'',fuel:0});
+  closeModal();toast('Equipment added!','eme');renderModule('machinery');
+};
+window.allocateMachine=(id)=>{toast('Machine allocated to project!','eme');addLog('Machine '+id+' allocated');};
+window.openFuelLog=()=>{toast('Fuel log entry form (simulated)','amb');};
+
+// ===================== 8. PROJECT MANAGEMENT =====================
+function renderProject(){
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Project <span>Management</span></div>
+    <button class="btn btn-pur" onclick="openAddProject()"><i class="fas fa-plus"></i> New Project</button>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">🏗️</div><div class="stat-val">${DB.projects.length}</div><div class="stat-label">Total Projects</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">📊</div><div class="stat-val">${Math.round(DB.projects.reduce((s,p)=>s+p.progress,0)/DB.projects.length)}%</div><div class="stat-label">Avg. Progress</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">💰</div><div class="stat-val">${fmt(DB.projects.reduce((s,p)=>s+p.budget,0))}</div><div class="stat-label">Total Budget</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">✅</div><div class="stat-val">${DB.projects.filter(p=>p.status==='completing').length}</div><div class="stat-label">Completing</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">📋 Project Master</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>ID</th><th>Project Name</th><th>Client</th><th>Budget</th><th>Spent</th><th>Progress</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="projTbody">${projectRows()}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <h3 style="margin-bottom:1rem;font-size:1rem;">📅 Gantt Chart (Skyline Towers – Phase 1)</h3>
+    <div class="gantt-wrap" id="ganttWrap"></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;">
+    <h3 style="margin-bottom:1rem;font-size:1rem;">👥 Resource Allocation</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+      ${[{type:'Men/Labour',count:'245 Workers',icon:'👷',project:'Skyline Towers'},
+         {type:'Machinery',count:'3 Equipment',icon:'🏗️',project:'Metro Bridge'},
+         {type:'Material',count:'12 Types',icon:'📦',project:'All Projects'}].map(r=>`
+        <div class="glass-amb" style="padding:1rem;border-radius:var(--radius-md);">
+          <div style="font-size:1.5rem;margin-bottom:6px;">${r.icon}</div>
+          <div style="font-weight:600;font-size:0.9rem;">${r.type}</div>
+          <div style="font-size:1.3rem;font-weight:700;color:var(--amb3);margin:4px 0;">${r.count}</div>
+          <div style="font-size:0.75rem;color:var(--text-dim);">${r.project}</div>
+          <button class="btn btn-out btn-xs" style="margin-top:8px;" onclick="toast('Resource allocation updated','eme')">Assign More</button>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+function projectRows(){
+  return DB.projects.map(p=>`
+    <tr><td>${p.id}</td><td><strong>${p.name}</strong></td><td>${p.client}</td>
+    <td>${fmt(p.budget)}</td><td>${fmt(p.actual)}</td>
+    <td><div class="progress-wrap" style="width:90px;display:inline-block;vertical-align:middle;"><div class="progress-bar" style="width:${p.progress}%"></div></div> ${p.progress}%</td>
+    <td>${statusPill(p.status)}</td>
+    <td>
+      <button class="btn btn-out btn-xs" onclick="editProject(${p.id})"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-danger btn-xs" onclick="deleteProject(${p.id})"><i class="fas fa-trash"></i></button>
+    </td></tr>`).join('');
+}
+function initGantt(){
+  const tasks=[
+    {name:'Foundation & Piling',start:0,duration:20,color:'var(--pur2)'},
+    {name:'Ground Floor Slab',start:18,duration:15,color:'var(--amb2)'},
+    {name:'Structural Frame',start:30,duration:45,color:'var(--eme2)'},
+    {name:'Brickwork & Plastering',start:55,duration:30,color:'var(--pur3)'},
+    {name:'MEP Works',start:65,duration:35,color:'var(--org3)'},
+    {name:'Finishing & Handover',start:88,duration:12,color:'var(--rose3)'}
+  ];
+  const g=document.getElementById('ganttWrap');
+  if(!g) return;
+  g.innerHTML=tasks.map(t=>`
+    <div class="gantt-row">
+      <div class="gantt-label">${t.name}</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:${t.start}%;width:${t.duration}%;background:${t.color};">${t.duration}d</div>
+      </div>
+    </div>`).join('');
+}
+window.openAddProject=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">🏗️ New Project</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Project Name</label><input class="form-control" id="pr_name" placeholder="Project title"></div>
+      <div class="form-group"><label>Client</label><input class="form-control" id="pr_client" placeholder="Client name"></div>
+      <div class="form-group"><label>Budget (₹)</label><input class="form-control" type="number" id="pr_budget" placeholder="0"></div>
+      <div class="form-group"><label>Start Date</label><input class="form-control" type="date" id="pr_start" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group"><label>End Date</label><input class="form-control" type="date" id="pr_end"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="saveProject()">Create Project</button>
+    </div>
+  </div>`);
+};
+window.saveProject=()=>{
+  const name=document.getElementById('pr_name').value;
+  if(!name){toast('Enter project name','rose');return;}
+  DB.projects.push({id:200+DB.projects.length,name,client:document.getElementById('pr_client').value,
+    progress:0,budget:+document.getElementById('pr_budget').value,actual:0,
+    startDate:document.getElementById('pr_start').value,endDate:document.getElementById('pr_end').value,status:'active'});
+  closeModal();toast('Project created!','eme');addLog('New project: '+name);document.getElementById('projTbody').innerHTML=projectRows();
+};
+window.editProject=(id)=>{const p=DB.projects.find(x=>x.id===id);if(!p)return;
+  showModal(`<div class="modal-box">
+    <div class="modal-title">✏️ Edit Project</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Progress (%)</label><input class="form-control" type="number" id="ep_prog" value="${p.progress}" min="0" max="100"></div>
+      <div class="form-group"><label>Actual Spend (₹)</label><input class="form-control" type="number" id="ep_actual" value="${p.actual}"></div>
+      <div class="form-group"><label>Status</label>
+        <select class="form-control" id="ep_status"><option${p.status==='active'?' selected':''}>active</option><option${p.status==='completing'?' selected':''}>completing</option><option>completed</option><option>on-hold</option></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="updateProject(${id})">Update</button>
+    </div>
+  </div>`);
+};
+window.updateProject=(id)=>{
+  const p=DB.projects.find(x=>x.id===id);
+  p.progress=+document.getElementById('ep_prog').value;
+  p.actual=+document.getElementById('ep_actual').value;
+  p.status=document.getElementById('ep_status').value;
+  closeModal();toast('Project updated!','eme');document.getElementById('projTbody').innerHTML=projectRows();
+};
+window.deleteProject=(id)=>{DB.projects=DB.projects.filter(p=>p.id!==id);toast('Project removed','rose');document.getElementById('projTbody').innerHTML=projectRows();};
+
+// ===================== 9. PRODUCTION =====================
+function renderProduction(){
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Production <span>Planning</span></div>
+    <button class="btn btn-pur" onclick="openNewBatch()"><i class="fas fa-plus"></i> New Batch</button>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">🏭</div><div class="stat-val">${DB.production.length}</div><div class="stat-label">Active Batches</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">📊</div><div class="stat-val">${Math.round(DB.production.reduce((s,p)=>s+(p.produced/p.target),0)/DB.production.length*100)}%</div><div class="stat-label">Avg. Achievement</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">🎯</div><div class="stat-val">${fmtN(DB.production.reduce((s,p)=>s+p.target,0))}</div><div class="stat-label">Total Target</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">✅</div><div class="stat-val">${fmtN(DB.production.reduce((s,p)=>s+p.produced,0))}</div><div class="stat-label">Total Produced</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">📊 Production vs Target</h3></div>
+    <div class="chart-wrap"><canvas id="prodChart"></canvas></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">🏭 Production Batches</h3></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Product / Grade</th><th>Target</th><th>Produced</th><th>Unit</th><th>Achievement</th><th>Project</th><th>Action</th></tr></thead>
+        <tbody id="prodTbody">${prodRows()}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;">
+    <h3 style="margin-bottom:1rem;font-size:1rem;">🧱 Raw Material Consumption</h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Material</th><th>Opening Stock</th><th>Consumed</th><th>Closing Stock</th><th>Unit</th></tr></thead>
+        <tbody>
+          <tr><td>Cement OPC 53</td><td>6200</td><td>800</td><td>5400</td><td>Bags</td></tr>
+          <tr><td>TMT Steel Fe500</td><td>1400</td><td>150</td><td>1250</td><td>MT</td></tr>
+          <tr><td>Coarse Aggregate</td><td>1200</td><td>220</td><td>980</td><td>MT</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function prodRows(){
+  return DB.production.map(p=>{
+    const pct=Math.round(p.produced/p.target*100);
+    return `<tr><td>${p.id}</td><td><strong>${p.product}</strong></td>
+      <td>${fmtN(p.target)}</td><td>${fmtN(p.produced)}</td><td>${p.unit}</td>
+      <td><div class="progress-wrap" style="width:80px;display:inline-block;vertical-align:middle;"><div class="progress-bar" style="width:${pct}%"></div></div> ${pct}%</td>
+      <td>${p.project}</td>
+      <td><button class="btn btn-eme btn-xs" onclick="updateProd(${p.id})">Update</button></td>
+      </tr>`;}).join('');
+}
+function initProdChart(){
+  const ctx=document.getElementById('prodChart');
+  if(!ctx) return;
+  new Chart(ctx,{type:'bar',data:{
+    labels:DB.production.map(p=>p.product),
+    datasets:[
+      {label:'Target',data:DB.production.map(p=>p.target),backgroundColor:'rgba(168,85,247,0.5)',borderRadius:6},
+      {label:'Produced',data:DB.production.map(p=>p.produced),backgroundColor:'rgba(16,185,129,0.5)',borderRadius:6}
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'var(--text-muted)'}}},
+      scales:{x:{grid:{color:'rgba(168,85,247,0.1)'},ticks:{color:'var(--text-muted)'}},
+              y:{grid:{color:'rgba(168,85,247,0.1)'},ticks:{color:'var(--text-muted)'}}}
+    }});
+}
+window.openNewBatch=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">🏭 New Production Batch</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Product / Grade</label><input class="form-control" id="pb_prod" placeholder="e.g. M25 Concrete, Precast Slab"></div>
+      <div class="form-group"><label>Target Quantity</label><input class="form-control" type="number" id="pb_target" placeholder="0"></div>
+      <div class="form-group"><label>Unit</label>
+        <select class="form-control" id="pb_unit"><option>Cum</option><option>Nos</option><option>MT</option><option>Bags</option></select>
+      </div>
+      <div class="form-group"><label>Project</label>
+        <select class="form-control" id="pb_proj">${DB.projects.map(p=>`<option>${p.name.split(' ')[0]}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="saveBatch()">Start Batch</button>
+    </div>
+  </div>`);
+};
+window.saveBatch=()=>{
+  const prod=document.getElementById('pb_prod').value;
+  if(!prod){toast('Enter product name','rose');return;}
+  DB.production.push({id:DB.production.length+10,product:prod,
+    target:+document.getElementById('pb_target').value,produced:0,
+    unit:document.getElementById('pb_unit').value,
+    project:document.getElementById('pb_proj').value,date:new Date().toISOString().slice(0,7)});
+  closeModal();toast('Batch created!','eme');renderModule('production');
+};
+window.updateProd=(id)=>{
+  const p=DB.production.find(x=>x.id===id);
+  const qty=+prompt(`Update produced quantity for ${p.product} (current: ${p.produced}):`);
+  if(qty>=0){p.produced=qty;toast('Production updated!','eme');document.getElementById('prodTbody').innerHTML=prodRows();}
+};
+
+// ===================== 10. TENDER =====================
+function renderTender(){
+  return `
+  <div class="mod-header">
+    <div class="mod-title">Tender <span>Management</span></div>
+    <button class="btn btn-pur" onclick="openNewTender()"><i class="fas fa-plus"></i> New Tender</button>
+  </div>
+  <div class="stats-grid">
+    <div class="glass-card stat-card"><div class="stat-icon">📄</div><div class="stat-val">${DB.tenders.length}</div><div class="stat-label">Total Tenders</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">🏆</div><div class="stat-val">${DB.tenders.filter(t=>t.status==='won').length}</div><div class="stat-label">Won</div><div class="stat-trend trend-up"><i class="fas fa-arrow-up"></i> 50% win rate</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">⏳</div><div class="stat-val">${DB.tenders.filter(t=>t.status==='submitted').length}</div><div class="stat-label">Awaiting Result</div></div>
+    <div class="glass-card stat-card"><div class="stat-icon">💰</div><div class="stat-val">₹${(DB.tenders.reduce((s,t)=>s+t.estValue,0)/10000000).toFixed(0)}Cr</div><div class="stat-label">Pipeline Value</div></div>
+  </div>
+
+  <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="mod-header"><h3 style="font-size:1rem;">📋 Tender Tracker</h3></div>
+    <div class="search-bar">
+      <div class="search-input-wrap"><i class="fas fa-search"></i><input class="search-input" placeholder="Search tenders..." oninput="filterTenders(this.value)"></div>
+      <select class="form-control" style="max-width:160px;border-radius:44px;" onchange="filterTendersStatus(this.value)">
+        <option value="">All Status</option>
+        <option>floating</option><option>submitted</option><option>won</option><option>lost</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Tender ID</th><th>Title</th><th>Client</th><th>Est. Value</th><th>Float Date</th><th>Submit Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="tenderTbody">${tenderRows()}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;">
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">📁 BOQ Repository</h3>
+      ${DB.tenders.map(t=>`
+        <div class="glass-eme" style="padding:10px 14px;margin-bottom:8px;border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
+          <div><div style="font-size:0.85rem;font-weight:500;">${t.title.slice(0,25)}...</div>
+            <div style="font-size:0.75rem;color:var(--text-dim);">${t.id}</div></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-out btn-xs" onclick="toast('BOQ uploaded','eme')"><i class="fas fa-upload"></i></button>
+            <button class="btn btn-eme btn-xs" onclick="toast('BOQ downloaded','eme')"><i class="fas fa-download"></i></button>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="glass-card" style="padding:1.5rem;">
+      <h3 style="margin-bottom:1rem;font-size:1rem;">🧮 Bid Cost Estimator</h3>
+      <div class="form-group" style="margin-bottom:1rem;"><label>Select Tender</label>
+        <select class="form-control" id="bid_tender">${DB.tenders.map(t=>`<option value="${t.id}">${t.title}</option>`).join('')}</select>
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group"><label>Material Cost</label><input class="form-control" id="bid_mat" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Labour Cost</label><input class="form-control" id="bid_lab" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Machinery</label><input class="form-control" id="bid_mach" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Overhead %</label><input class="form-control" id="bid_oh" type="number" placeholder="12" value="12"></div>
+      </div>
+      <div id="bidResult" style="margin-top:1rem;padding:12px;background:rgba(168,85,247,0.1);border-radius:var(--radius-sm);display:none;">
+        <div style="font-size:0.8rem;color:var(--text-dim);">Estimated Bid Amount</div>
+        <div style="font-size:1.4rem;font-weight:700;color:var(--amb3);" id="bidTotal">₹0</div>
+      </div>
+      <button class="btn btn-pur" style="margin-top:1rem;" onclick="calcBid()">Calculate Bid</button>
+    </div>
+  </div>`;
+}
+function tenderRows(){
+  return DB.tenders.map(t=>`
+    <tr><td>${t.id}</td><td><strong>${t.title}</strong></td><td>${t.client}</td>
+    <td>₹${(t.estValue/10000000).toFixed(2)}Cr</td>
+    <td>${t.floatDate}</td><td>${t.submitDate}</td>
+    <td>${statusPill(t.status)}</td>
+    <td>
+      <button class="btn btn-eme btn-xs" onclick="markTenderWon('${t.id}')">Mark Won</button>
+      <button class="btn btn-out btn-xs" onclick="editTender('${t.id}')"><i class="fas fa-edit"></i></button>
+    </td></tr>`).join('');
+}
+window.markTenderWon=(id)=>{const t=DB.tenders.find(x=>x.id===id);if(t){t.status='won';t.result='won';toast('Tender marked WON! 🏆','eme');addLog('Tender won: '+id);document.getElementById('tenderTbody').innerHTML=tenderRows();}};
+window.filterTenders=(v)=>{const b=document.getElementById('tenderTbody');if(b)b.innerHTML=DB.tenders.filter(t=>t.title.toLowerCase().includes(v)||t.client.toLowerCase().includes(v)).map(t=>tenderRows()).join('')||tenderRows();};
+window.filterTendersStatus=(s)=>{const b=document.getElementById('tenderTbody');if(b)b.innerHTML=(s?DB.tenders.filter(t=>t.status===s):DB.tenders).map(t=>`<tr><td>${t.id}</td><td><strong>${t.title}</strong></td><td>${t.client}</td><td>₹${(t.estValue/10000000).toFixed(2)}Cr</td><td>${t.floatDate}</td><td>${t.submitDate}</td><td>${statusPill(t.status)}</td><td><button class="btn btn-eme btn-xs" onclick="markTenderWon('${t.id}')">Mark Won</button></td></tr>`).join('');};
+window.calcBid=()=>{
+  const mat=+document.getElementById('bid_mat').value||0;
+  const lab=+document.getElementById('bid_lab').value||0;
+  const mach=+document.getElementById('bid_mach').value||0;
+  const oh=+document.getElementById('bid_oh').value||12;
+  const sub=mat+lab+mach;
+  const total=sub*(1+oh/100);
+  document.getElementById('bidResult').style.display='block';
+  document.getElementById('bidTotal').textContent=fmt(Math.round(total));
+  toast('Bid calculated!','eme');
+};
+window.openNewTender=()=>{
+  showModal(`<div class="modal-box">
+    <div class="modal-title">📄 New Tender</div>
+    <div class="form-grid" style="grid-template-columns:1fr;">
+      <div class="form-group"><label>Tender Title</label><input class="form-control" id="td_title" placeholder="Project description"></div>
+      <div class="form-group"><label>Client / Issuing Authority</label><input class="form-control" id="td_client" placeholder="Client name"></div>
+      <div class="form-group"><label>Estimated Value (₹)</label><input class="form-control" type="number" id="td_value" placeholder="0"></div>
+      <div class="form-group"><label>Float Date</label><input class="form-control" type="date" id="td_float" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group"><label>Submission Date</label><input class="form-control" type="date" id="td_submit"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pur" onclick="saveTender()">Add Tender</button>
+    </div>
+  </div>`);
+};
+window.saveTender=()=>{
+  const title=document.getElementById('td_title').value;
+  if(!title){toast('Enter tender title','rose');return;}
+  const id='TDR-2025-0'+(DB.tenders.length+4);
+  DB.tenders.unshift({id,title,client:document.getElementById('td_client').value,
+    floatDate:document.getElementById('td_float').value,
+    submitDate:document.getElementById('td_submit').value,
+    estValue:+document.getElementById('td_value').value,status:'floating',result:''});
+  closeModal();toast('Tender added!','eme');addLog('New tender: '+title);document.getElementById('tenderTbody').innerHTML=tenderRows();
+};
+window.editTender=(id)=>{toast('Edit tender form (simulated)','amb');};
+
+// ===================== HELPERS =====================
+function accessDenied(){
+  return `<div class="glass-card" style="padding:3rem;text-align:center;">
+    <div style="font-size:4rem;margin-bottom:1rem;">🔒</div>
+    <div style="font-size:1.2rem;font-weight:600;margin-bottom:0.5rem;">Access Restricted</div>
+    <div style="color:var(--text-muted);">Your current role does not have permission to access this module.</div>
+    <div style="margin-top:1rem;"><select class="role-select" onchange="document.getElementById('roleSwitcher').value=this.value;switchRole(this.value)">
+      <option>Switch Role</option>
+      <option value="admin">Admin</option>
+    </select></div>
+  </div>`;
+}
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded',()=>{});
+</script>
+</body>
+</html>
